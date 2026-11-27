@@ -3,23 +3,22 @@ name: Build and Push
 on:
   push:
     branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-staging
+  cancel-in-progress: false
 
 permissions:
   contents: read
-  packages: write
-
-concurrency:
-  group: main-build
-  cancel-in-progress: false
-
-env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
+  id-token: write
 
 jobs:
-  build-and-push:
-    name: Build multi-arch image and push to GHCR
+  build:
+    name: Build and push to ECR
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.ver.outputs.version }}
     steps:
       - uses: actions/checkout@v4
 
@@ -27,11 +26,15 @@ jobs:
 
       - uses: docker/setup-buildx-action@v3
 
-      - uses: docker/login-action@v3
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
         with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Login to ECR
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
 
       - name: Compute version
         id: ver
@@ -41,7 +44,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          images: ${{ steps.ecr.outputs.registry }}/${{ vars.ECR_REPOSITORY }}
           tags: |
             type=sha,format=long
             type=raw,value=${{ steps.ver.outputs.version }}
@@ -58,3 +61,61 @@ jobs:
             APP_VERSION=${{ steps.ver.outputs.version }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+  deploy:
+    name: Deploy to EC2 (SSM), smoke test, rollback
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Deploy via SSM
+        env:
+          VERSION: ${{ needs.build.outputs.version }}
+          INSTANCE_ID: ${{ vars.EC2_INSTANCE_ID }}
+        run: |
+          set -euo pipefail
+          cat > remote.sh <<'REMOTE'
+          set -uo pipefail
+          PREV_IMAGE=$(docker inspect app --format '{{.Config.Image}}' 2>/dev/null || true)
+          echo "previous image: ${PREV_IMAGE:-none}"
+          if /usr/local/bin/deploy-app.sh "$TAG"; then
+            for i in $(seq 1 10); do
+              if curl -fsS http://localhost:8080/health; then
+                echo "smoke test passed"
+                exit 0
+              fi
+              sleep 3
+            done
+          fi
+          echo "deploy or smoke test FAILED"
+          if [ -n "$PREV_IMAGE" ]; then
+            echo "rolling back to $PREV_IMAGE"
+            /usr/local/bin/deploy-app.sh "${PREV_IMAGE##*:}"
+          else
+            docker rm -f app || true
+          fi
+          exit 1
+          REMOTE
+
+          SCRIPT="TAG=$VERSION"$'\n'"$(cat remote.sh)"
+          PARAMS=$(jq -n --arg s "$SCRIPT" '{commands: [$s]}')
+          CMD_ID=$(aws ssm send-command \
+            --instance-ids "$INSTANCE_ID" \
+            --document-name AWS-RunShellScript \
+            --parameters "$PARAMS" \
+            --query Command.CommandId --output text)
+
+          aws ssm wait command-executed --command-id "$CMD_ID" --instance-id "$INSTANCE_ID" || true
+
+          echo "---- remote output ----"
+          aws ssm get-command-invocation --command-id "$CMD_ID" --instance-id "$INSTANCE_ID" \
+            --query StandardOutputContent --output text
+          STATE=$(aws ssm get-command-invocation --command-id "$CMD_ID" --instance-id "$INSTANCE_ID" \
+            --query Status --output text)
+          echo "SSM status: $STATE"
+          [ "$STATE" = "Success" ] || { echo "Deploy failed (rolled back if a previous image existed)"; exit 1; }
