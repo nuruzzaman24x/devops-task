@@ -1,0 +1,27 @@
+#!/bin/bash
+set -euxo pipefail
+
+dnf install -y docker
+systemctl enable --now docker
+
+# Same script is reused by CI (via SSM) for deploy and rollback.
+cat > /usr/local/bin/deploy-app.sh <<'DEPLOY'
+#!/bin/bash
+set -euo pipefail
+TAG="$1"
+aws ecr get-login-password --region ${region} | docker login --username AWS --password-stdin ${registry}
+docker pull ${repo_url}:"$TAG"
+docker rm -f app 2>/dev/null || true
+docker run -d --name app --restart unless-stopped \
+  -p ${app_port}:8080 \
+  --log-driver awslogs \
+  --log-opt awslogs-region=${region} \
+  --log-opt awslogs-group=${log_group} \
+  --log-opt awslogs-stream=app \
+  ${repo_url}:"$TAG"
+DEPLOY
+chmod +x /usr/local/bin/deploy-app.sh
+
+if [ -n "${image_tag}" ]; then
+  /usr/local/bin/deploy-app.sh "${image_tag}" || echo "initial image not available yet"
+fi

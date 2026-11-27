@@ -1,0 +1,11 @@
+apiVersion: v1   # which Kubernetes API version this object uses
+kind: ConfigMap   # object type: a key-value store for non-secret settings
+metadata:   # identity information of this object
+  name: devops-task-config   # name of this ConfigMap
+  namespace: devops-task   # put it inside the namespace we created
+  labels:   # small tags attached to the object
+    app.kubernetes.io/name: devops-task   # tag: this belongs to the devops-task app
+data:   # the actual settings (key: value), all values must be strings
+  PORT: "8080"   # port the app listens on
+  LOG_LEVEL: "INFO"   # how detailed the logs are
+  APP_ENV: "k8s-local"   # name of the environment the app runs in

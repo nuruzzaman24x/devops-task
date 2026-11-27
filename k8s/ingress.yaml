@@ -1,0 +1,20 @@
+apiVersion: networking.k8s.io/v1   # API group that holds Ingress objects
+kind: Ingress   # object type: routes outside HTTP traffic to a Service
+metadata:   # identity information of this object
+  name: devops-task   # name of this Ingress
+  namespace: devops-task   # the namespace we created earlier
+  labels:   # small tags attached to the object
+    app.kubernetes.io/name: devops-task   # tag: belongs to the devops-task app
+spec:   # the desired state we want
+  ingressClassName: nginx   # use the ingress-nginx controller (class name from your cluster)
+  rules:   # routing rules
+    - host: devops-task.local.com   # only requests for this hostname match this rule
+      http:   # HTTP routing
+        paths:   # list of URL paths
+          - path: /   # match every path
+            pathType: Prefix   # "/" and anything below it
+            backend:   # where to send the traffic
+              service:   # send it to a Service
+                name: devops-task   # our Service name
+                port:   # which Service port
+                  name: http   # the port named "http" (80) in service.yaml

@@ -1,0 +1,15 @@
+apiVersion: v1   # which Kubernetes API version this object uses
+kind: Service   # object type: a stable address in front of the pods
+metadata:   # identity information of this object
+  name: devops-task   # name of this Service (other pods can reach it by this name)
+  namespace: devops-task   # the namespace we created earlier
+  labels:   # small tags attached to the object
+    app.kubernetes.io/name: devops-task   # tag: belongs to the devops-task app
+spec:   # the desired state we want
+  type: ClusterIP   # reachable only inside the cluster (Ingress will expose it later)
+  selector:   # which pods receive the traffic
+    app.kubernetes.io/name: devops-task   # all pods with this label
+  ports:   # port mapping
+    - name: http   # a friendly name for the port
+      port: 80   # the port the Service listens on
+      targetPort: http   # forward to the named port "http" (8080) in the pod

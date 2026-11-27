@@ -1,0 +1,81 @@
+apiVersion: apps/v1   # API group that holds Deployment objects
+kind: Deployment   # object type: keeps N copies (pods) of the app running
+metadata:   # identity information of this object
+  name: devops-task   # name of this Deployment
+  namespace: devops-task   # the namespace we created earlier
+  labels:   # small tags attached to the object
+    app.kubernetes.io/name: devops-task   # tag: belongs to the devops-task app
+spec:   # the desired state we want
+  replicas: 2   # always keep 2 pods running (assignment needs at least 2)
+  revisionHistoryLimit: 5   # remember last 5 versions so "rollout undo" can go back
+  selector:   # how the Deployment finds its own pods
+    matchLabels:   # pods must have these labels
+      app.kubernetes.io/name: devops-task   # same tag as in the pod template below
+  strategy:   # how new versions replace old ones
+    type: RollingUpdate   # replace pods one by one, not all at once
+    rollingUpdate:   # settings for the rolling update
+      maxUnavailable: 0   # never kill an old pod before a new one is ready (zero downtime)
+      maxSurge: 1   # allow 1 extra pod during the update
+  template:   # blueprint used to create each pod
+    metadata:   # identity of each pod
+      labels:   # tags on each pod
+        app.kubernetes.io/name: devops-task   # must match selector above
+    spec:   # pod settings
+      terminationGracePeriodSeconds: 30   # give the app 30s to finish work after SIGTERM
+      securityContext:   # security settings for the whole pod
+        runAsNonRoot: true   # refuse to start if the image tries to run as root
+        runAsUser: 10001   # run as the same user id created in our Dockerfile
+        runAsGroup: 10001   # run with the same group id
+        fsGroup: 10001   # mounted volumes become writable for this group
+        seccompProfile:   # limit which system calls the container may use
+          type: RuntimeDefault   # use the container runtime default safe profile
+      containers:   # list of containers in the pod
+        - name: app   # container name
+          image: ghcr.io/nuruzzaman24x/devops-task:0.1.0   # the image we pushed to GHCR
+          imagePullPolicy: IfNotPresent   # pull only if the node does not have it already
+          ports:   # ports the container listens on
+            - name: http   # a friendly name for the port
+              containerPort: 8080   # the app listens on 8080
+          envFrom:   # load many env variables at once
+            - configMapRef:   # from a ConfigMap
+                name: devops-task-config   # PORT, LOG_LEVEL, APP_ENV
+            - secretRef:   # from a Secret
+                name: devops-task-secret   # APP_API_KEY
+          resources:   # CPU and memory settings
+            requests:   # the minimum the scheduler reserves for this pod
+              cpu: 50m   # 0.05 CPU core
+              memory: 64Mi   # 64 MiB memory
+            limits:   # the maximum the pod may use
+              cpu: 250m   # 0.25 CPU core
+              memory: 128Mi   # 128 MiB memory, above this the pod is killed (OOM)
+          readinessProbe:   # "is the pod ready to receive traffic?"
+            httpGet:   # check by calling an HTTP URL
+              path: /health   # the health endpoint of our app
+              port: http   # use the named port above (8080)
+            initialDelaySeconds: 3   # wait 3s after start before the first check
+            periodSeconds: 5   # check every 5 seconds
+            timeoutSeconds: 2   # fail the check if no answer in 2 seconds
+            failureThreshold: 3   # 3 failed checks in a row = not ready
+          livenessProbe:   # "is the pod still alive?" (restart it if not)
+            httpGet:   # check by calling an HTTP URL
+              path: /health   # the same health endpoint
+              port: http   # use the named port above (8080)
+            initialDelaySeconds: 10   # wait 10s so the app can fully start
+            periodSeconds: 10   # check every 10 seconds
+            timeoutSeconds: 2   # fail the check if no answer in 2 seconds
+            failureThreshold: 3   # 3 failed checks in a row = restart the container
+          lifecycle:   # actions at container start and stop
+            preStop:   # runs just before the container gets SIGTERM
+              exec:   # run a command inside the container
+                command: ["sleep", "5"]   # wait 5s so the Service stops sending traffic first
+          securityContext:   # security settings for this container
+            allowPrivilegeEscalation: false   # the process can never gain extra privileges
+            readOnlyRootFilesystem: true   # the container cannot write to its own filesystem
+            capabilities:   # Linux special powers
+              drop: ["ALL"]   # remove all special powers
+          volumeMounts:   # folders mounted inside the container
+            - name: tmp   # use the volume named tmp (defined below)
+              mountPath: /tmp   # mount it at /tmp, the only writable place
+      volumes:   # volumes available to the pod
+        - name: tmp   # volume name
+          emptyDir: {}   # an empty temporary folder, deleted when the pod dies

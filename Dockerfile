@@ -3,7 +3,7 @@
 # Stage 1: builder - install dependencies into an isolated venv
 # ---------------------------------------------------------------------------
 # Base pinned by tag AND digest (tag for readability, digest for immutability)
-FROM python:3.12.7-alpine3.20@sha256:5049c050bdc68575a10bcb1885baa0689b6c15152d8a56a7e399fb49f783bf98 AS builder
+FROM python:3.12-alpine3.22@sha256:a190708a2dec1bd18b1decb539f8e8f5407abaa9bf39cacda583f7f8c11db322 AS builder
 
 WORKDIR /build
 
@@ -17,7 +17,7 @@ RUN pip install --no-cache-dir --upgrade pip==24.3.1 \
 # ---------------------------------------------------------------------------
 # Stage 2: final - minimal Alpine runtime, non-root, no build tools
 # ---------------------------------------------------------------------------
-FROM python:3.12.7-alpine3.20@sha256:5049c050bdc68575a10bcb1885baa0689b6c15152d8a56a7e399fb49f783bf98 AS final
+FROM python:3.12-alpine3.22@sha256:a190708a2dec1bd18b1decb539f8e8f5407abaa9bf39cacda583f7f8c11db322 AS final
 
 LABEL org.opencontainers.image.title="devops-task-service" \
       org.opencontainers.image.description="Small web service for DevOps take-home assessment" \
