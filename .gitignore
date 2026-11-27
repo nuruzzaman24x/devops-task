@@ -1,0 +1,17 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+.coverage
+htmlcov/
+.venv/
+venv/
+*.log
+health_log.txt
+.env
+.env.*
+.terraform/
+*.tfstate
+*.tfstate.*
+.terraform.lock.hcl
+kubeconfig*
+*.local.yml
