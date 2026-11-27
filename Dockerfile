@@ -43,6 +43,9 @@ ENV PATH="/opt/venv/bin:$PATH" \
     LOG_LEVEL=INFO \
     APP_ENV=production
 
+ARG APP_VERSION=0.1.0
+ENV APP_VERSION=${APP_VERSION}
+
 USER appuser
 
 EXPOSE 8080
