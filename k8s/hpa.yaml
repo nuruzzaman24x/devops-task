@@ -1,0 +1,24 @@
+apiVersion: autoscaling/v2   # API version that supports CPU and memory metrics
+kind: HorizontalPodAutoscaler   # object type: automatically changes the number of pods
+metadata:   # identity information of this object
+  name: devops-task   # name of this HPA
+  namespace: devops-task   # the namespace we created earlier
+  labels:   # small tags attached to the object
+    app.kubernetes.io/name: devops-task   # tag: belongs to the devops-task app
+spec:   # the desired state we want
+  scaleTargetRef:   # which object should be scaled
+    apiVersion: apps/v1   # API version of the target
+    kind: Deployment   # the target is a Deployment
+    name: devops-task   # name of our Deployment
+  minReplicas: 2   # never go below 2 pods (keeps high availability)
+  maxReplicas: 5   # never go above 5 pods (protects the cluster from runaway scaling)
+  metrics:   # what to watch
+    - type: Resource   # watch a built-in resource metric
+      resource:   # resource settings
+        name: cpu   # watch CPU usage
+        target:   # the goal value
+          type: Utilization   # percentage of the CPU request (50m in our Deployment)
+          averageUtilization: 70   # add pods when the average CPU goes above 70%
+  behavior:   # how fast to scale
+    scaleDown:   # rules for removing pods
+      stabilizationWindowSeconds: 60   # wait 60s of low load before removing pods (avoids flapping)
