@@ -1,0 +1,28 @@
+# kube-prometheus-stack values (local cluster). Small footprint, short retention.
+grafana:
+  admin:
+    existingSecret: grafana-admin   # credentials come from a Secret, not from git
+    userKey: admin-user
+    passwordKey: admin-password
+  persistence:
+    enabled: false
+prometheus:
+  prometheusSpec:
+    retention: 7d
+    resources:
+      requests: { cpu: 100m, memory: 400Mi }
+      limits: { memory: 1Gi }
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 10Gi
+    # also pick up ServiceMonitors/rules that are not created by this Helm release
+    serviceMonitorSelectorNilUsesHelmValues: false
+    podMonitorSelectorNilUsesHelmValues: false
+alertmanager:
+  alertmanagerSpec:
+    resources:
+      requests: { cpu: 10m, memory: 50Mi }
