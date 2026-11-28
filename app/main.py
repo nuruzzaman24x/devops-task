@@ -26,7 +26,7 @@ from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 
 OTEL_ENABLED = os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT") is not None
 
-if OTEL_ENABLED:
+if OTEL_ENABLED:  # pragma: no cover - exercised only with a real OTLP collector
     _resource = Resource.create({"service.name": "devops-task"})
     _provider = TracerProvider(resource=_resource)
     _otel_endpoint = os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT")
@@ -113,7 +113,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="DevOps Task Service", lifespan=lifespan)
 
-if OTEL_ENABLED:
+if OTEL_ENABLED:  # pragma: no cover - exercised only with a real OTLP collector
     FastAPIInstrumentor().instrument_app(app)
 
 QUIET_PATHS = {"/health", "/metrics"}  # probes/scrapes: log at DEBUG to avoid noise
