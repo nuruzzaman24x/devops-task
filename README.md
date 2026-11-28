@@ -181,6 +181,8 @@ Evidence of a successful run on `main` (ECR push, SSM deploy, smoke test):
 
 ![Successful main pipeline](docs/screenshots/ci-deploy-success.jpg)
 
+> **Note on later failed runs:** after testing, the AWS resources were deliberately destroyed with `terraform destroy` to stop costs, as the task asks. Pushes to `main` after that point fail at the ECR push step (`repository ... does not exist`) because the target no longer exists. That is expected. The screenshot above is the evidence of a successful run, and `terraform apply` recreates everything.
+
 ## 8. Terraform
 
 Layout:
