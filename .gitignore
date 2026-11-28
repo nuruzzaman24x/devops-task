@@ -16,3 +16,4 @@ health_log.txt
 kubeconfig*
 *.local.yml
 !.env.example
+health_log.txt*
