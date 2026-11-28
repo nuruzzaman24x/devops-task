@@ -21,9 +21,9 @@ FROM python:3.12-alpine3.22@sha256:a190708a2dec1bd18b1decb539f8e8f5407abaa9bf39c
 
 LABEL org.opencontainers.image.title="devops-task-service" \
       org.opencontainers.image.description="Small web service for DevOps take-home assessment" \
-      org.opencontainers.image.source="https://github.com/<org>/<repo>" \
+      org.opencontainers.image.source="https://github.com/nuruzzaman24x/devops-task" \
       org.opencontainers.image.licenses="MIT" \
-      org.opencontainers.image.vendor="candidate"
+      org.opencontainers.image.vendor="nuruzzaman24x"
 
 # Unprivileged, no-login user/group (Alpine/busybox syntax)
 RUN addgroup -g 10001 appgroup \
