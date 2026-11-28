@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC2015,SC2012  # dev-only self-check: "A && B || C" is intentional ok/warn/bad reporting
 # verify_assessment.sh
 # Run this from the ROOT of your devops-task repo:
 #   chmod +x verify_assessment.sh && ./verify_assessment.sh
