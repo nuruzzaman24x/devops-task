@@ -31,11 +31,14 @@ spec:   # the desired state we want
           type: RuntimeDefault   # use the container runtime default safe profile
       containers:   # list of containers in the pod
         - name: app   # container name
-          image: ghcr.io/nuruzzaman24x/devops-task:0.1.0   # the image we pushed to GHCR
+          image: ghcr.io/nuruzzaman24x/devops-task:0.3.0   # the image we pushed to GHCR
           imagePullPolicy: IfNotPresent   # pull only if the node does not have it already
           ports:   # ports the container listens on
             - name: http   # a friendly name for the port
               containerPort: 8080   # the app listens on 8080
+          env:   # extra individual env variables (not from ConfigMap/Secret)
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT   # where to send traces
+              value: "http://jaeger:4317"   # jaeger Service in this same namespace
           envFrom:   # load many env variables at once
             - configMapRef:   # from a ConfigMap
                 name: devops-task-config   # PORT, LOG_LEVEL, APP_ENV
