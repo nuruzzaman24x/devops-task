@@ -23,7 +23,7 @@ flowchart LR
   main -->|"SSM send-command via OIDC role"| ec2["EC2 (Docker)"]
   ecr -->|"pull"| ec2
   ec2 -->|"/health smoke test, rollback on failure"| ec2
-  ec2 -->|"container logs"| cw["CloudWatch Logs (14 days)"]
+  ec2 -->|"container logs"| cw["CloudWatch Logs (7 days staging, 30 days prod)"]
 ```
 
 Kubernetes flow (local cluster): `kubectl apply -f k8s/` creates Namespace, ConfigMap, Deployment (2 replicas, rolling update), Service, Ingress (ingress-nginx) and HPA. The Secret is created separately with `k8s/create-secret.sh`.
@@ -184,7 +184,7 @@ Remote state uses S3 with native locking (`use_lockfile = true`, Terraform >= 1.
 
 ```bash
 cd terraform/bootstrap && terraform init && terraform apply   # once
-cd ../
+cd ..
 terraform init \
   -backend-config="bucket=devops-task-tfstate-<aws-account-id>" \
   -backend-config="key=<environment>/terraform.tfstate" \
@@ -291,7 +291,7 @@ These are rough estimates from memory of public pricing, not a bill. Check them 
 | 1 x t3.micro EC2, on demand (free tier covers it for the first 12 months on eligible accounts) | about 8 |
 | 20 GB gp3 root volume | about 2 |
 | Public IPv4 address | about 4 |
-| CloudWatch Logs (small volume, 14-day retention) | about 1 to 3 |
+| CloudWatch Logs (small volume, 30-day prod retention) | about 1 to 3 |
 | ECR (a few hundred MB) | under 1 |
 | S3 state bucket | under 1 |
 | **Total** | **about 15 to 20** |
