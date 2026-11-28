@@ -1,0 +1,30 @@
+# Terraform evidence (staging), captured 2026-11-28T09:21:16Z
+# Command: terraform plan -var-file=envs/staging.tfvars
+data.aws_iam_policy_document.assume: Reading...
+data.aws_ssm_parameter.al2023: Reading...
+data.aws_vpc.default: Reading...
+aws_cloudwatch_log_group.app: Refreshing state... [id=/devops-task/staging/app]
+aws_ecr_repository.app: Refreshing state... [id=devops-task-staging]
+data.aws_iam_policy_document.assume: Read complete after 0s [id=2851119427]
+aws_iam_role.ec2: Refreshing state... [id=devops-task-staging-ec2-role]
+data.aws_ssm_parameter.al2023: Read complete after 1s [id=/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64]
+aws_ecr_lifecycle_policy.app: Refreshing state... [id=devops-task-staging]
+data.aws_iam_policy_document.app: Reading...
+data.aws_iam_policy_document.app: Read complete after 0s [id=646959312]
+data.aws_vpc.default: Read complete after 1s [id=vpc-025bfe7b99b520fb3]
+data.aws_subnets.default: Reading...
+aws_security_group.app: Refreshing state... [id=sg-0fcd78d9b2b3a97b5]
+data.aws_subnets.default: Read complete after 0s [id=ap-south-1]
+aws_iam_role_policy.app: Refreshing state... [id=devops-task-staging-ec2-role:devops-task-staging-app]
+aws_iam_role_policy_attachment.ssm: Refreshing state... [id=devops-task-staging-ec2-role-20261127182715580700000001]
+aws_iam_instance_profile.ec2: Refreshing state... [id=devops-task-staging-ec2-profile]
+aws_instance.app: Refreshing state... [id=i-04d723ef16efd5b26]
+No changes. Your infrastructure matches the configuration.
+Terraform has compared your real infrastructure against your configuration
+and found no differences, so no changes are needed.
+
+# Command: terraform output
+ecr_repository_url = "<account-id>.dkr.ecr.ap-south-1.amazonaws.com/devops-task-staging"
+instance_id = "i-04d723ef16efd5b26"
+log_group = "/devops-task/staging/app"
+public_ip = "13.235.56.115"

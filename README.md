@@ -201,7 +201,7 @@ Security and least privilege:
 - The CI role can be assumed only by this repository's `main` branch. It can push to `devops-task-*` ECR repositories and run `AWS-RunShellScript` on instances tagged with this project.
 - GitHub now sends the OIDC `sub` claim with numeric owner and repo IDs, so the trust policy accepts both the old and the new format.
 
-Evidence of `terraform apply` (screenshot or log) is not included in this repository.
+Evidence that the deployed infrastructure matches the code (`terraform plan` reports "No changes", plus `terraform output`): [`docs/terraform-evidence.txt`](docs/terraform-evidence.txt).
 
 ## 9. Kubernetes (local cluster)
 
