@@ -17,6 +17,22 @@ from prometheus_client import (
     Histogram,
     generate_latest,
 )
+from opentelemetry import trace
+from opentelemetry.sdk.resources import Resource
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import BatchSpanProcessor
+from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
+from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
+
+OTEL_ENABLED = os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT") is not None
+
+if OTEL_ENABLED:
+    _resource = Resource.create({"service.name": "devops-task"})
+    _provider = TracerProvider(resource=_resource)
+    _otel_endpoint = os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT")
+    _exporter = OTLPSpanExporter(endpoint=_otel_endpoint, insecure=True)
+    _provider.add_span_processor(BatchSpanProcessor(_exporter))
+    trace.set_tracer_provider(_provider)
 
 # ---------------------------------------------------------------------------
 # Configuration (all from environment variables)
@@ -96,6 +112,9 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="DevOps Task Service", lifespan=lifespan)
+
+if OTEL_ENABLED:
+    FastAPIInstrumentor().instrument_app(app)
 
 QUIET_PATHS = {"/health", "/metrics"}  # probes/scrapes: log at DEBUG to avoid noise
 
