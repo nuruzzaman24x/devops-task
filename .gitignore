@@ -15,3 +15,4 @@ health_log.txt
 .terraform.lock.hcl
 kubeconfig*
 *.local.yml
+!.env.example

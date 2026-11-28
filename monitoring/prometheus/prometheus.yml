@@ -1,0 +1,24 @@
+global:
+  scrape_interval: 15s       # how often Prometheus pulls metrics from each target
+  evaluation_interval: 15s   # how often alert rules are evaluated
+
+rule_files:
+  - /etc/prometheus/rules/*.yml   # alert rules, added in a later step
+
+scrape_configs:
+  - job_name: prometheus          # Prometheus monitors itself
+    static_configs:
+      - targets: ["prometheus:9090"]
+
+  - job_name: app                 # our FastAPI service, /metrics endpoint
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["app:8080"]
+
+  - job_name: node-exporter       # host CPU, memory, disk, network
+    static_configs:
+      - targets: ["node-exporter:9100"]
+
+  - job_name: cadvisor            # per-container CPU and memory
+    static_configs:
+      - targets: ["cadvisor:8080"]

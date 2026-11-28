@@ -1,0 +1,50 @@
+// Find all running containers through the Docker socket
+discovery.docker "containers" {
+  host = "unix:///var/run/docker.sock"
+}
+
+// Turn Docker metadata into a small, low-cardinality label set
+discovery.relabel "containers" {
+  targets = discovery.docker.containers.targets
+
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex         = "/(.*)"
+    target_label  = "container"   // container name, e.g. devops-task-app
+  }
+  rule {
+    source_labels = ["__meta_docker_container_label_com_docker_compose_service"]
+    target_label  = "service"   // compose service name, e.g. app
+  }
+}
+
+// Read the logs of every discovered container
+loki.source.docker "containers" {
+  host       = "unix:///var/run/docker.sock"
+  targets    = discovery.relabel.containers.output
+  forward_to = [loki.process.app_json.receiver]
+}
+
+// Parse the app's JSON logs. Only "level" becomes a label.
+// path, method, status, duration_ms stay inside the log line (high cardinality).
+loki.process "app_json" {
+  stage.match {
+    selector = "{service=\"app\"}"
+
+    stage.json {
+      expressions = { level = "level" }
+    }
+    stage.labels {
+      values = { level = "" }
+    }
+  }
+
+  forward_to = [loki.write.default.receiver]
+}
+
+// Ship everything to Loki over the internal docker network
+loki.write "default" {
+  endpoint {
+    url = "http://loki:3100/loki/api/v1/push"
+  }
+}

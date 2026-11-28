@@ -1,0 +1,17 @@
+apiVersion: 1
+
+datasources:
+  - name: Prometheus
+    uid: prometheus          # fixed id, dashboards refer to this
+    type: prometheus
+    access: proxy            # Grafana server talks to Prometheus, not the browser
+    url: http://prometheus:9090   # internal docker network address
+    isDefault: true
+    editable: false          # cannot be changed from the UI
+
+  - name: Loki
+    uid: loki                # fixed id, dashboards refer to this
+    type: loki
+    access: proxy
+    url: http://loki:3100    # internal docker network address
+    editable: false
