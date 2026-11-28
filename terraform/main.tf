@@ -156,12 +156,12 @@ resource "aws_instance" "app" {
   }
 
   user_data = templatefile("${path.module}/user_data.sh.tftpl", {
-    region     = var.region
-    registry   = split("/", aws_ecr_repository.app.repository_url)[0]
-    repo_url   = aws_ecr_repository.app.repository_url
-    log_group  = aws_cloudwatch_log_group.app.name
-    app_port   = var.app_port
-    image_tag  = var.initial_image_tag
+    region    = var.region
+    registry  = split("/", aws_ecr_repository.app.repository_url)[0]
+    repo_url  = aws_ecr_repository.app.repository_url
+    log_group = aws_cloudwatch_log_group.app.name
+    app_port  = var.app_port
+    image_tag = var.initial_image_tag
   })
 
   tags = { Name = local.name }

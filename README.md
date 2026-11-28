@@ -49,6 +49,9 @@ flowchart LR
 - Terraform >= 1.10 and AWS CLI (only for the AWS part)
 - A local Kubernetes cluster with ingress-nginx and metrics-server (only for the Kubernetes part)
 
+> Full manual installation steps for a fresh VM (AWS CLI, Docker, and bootstrapping a
+> Kubernetes cluster) are documented in [`docs/setup/manual-infra-setup.md`](docs/setup/manual-infra-setup.md).
+
 ## 3. Run the app locally
 
 ```bash
@@ -138,6 +141,12 @@ python -m pytest tests/ --cov=app --cov-report=term-missing
 ```
 
 CI fails the build if coverage is below 80%.
+
+
+> `scripts/verify_assessment.sh` is a self-check script used during development to
+> confirm each requirement of the task spec was met before submission.
+
+
 
 ## 6. Container image
 
